@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Nothing you drop here can leave the page: it may not connect anywhere. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>reply-clock: how long do people wait for your reply?</title>
+<meta name="description" content="Drop in your email export and get your first-reply times: the median, the share answered, after hours and for new contacts, graded A to F. Runs in your browser; your mail never leaves the page.">
+<meta property="og:title" content="reply-clock: how long do people wait for your reply?">
+<meta property="og:description" content="Grade your email reply times from an mbox export, in your browser. Headers only, never bodies. Nothing is uploaded.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<style>
+:root {
+  --page: #eef1f4;
+  --sheet: #ffffff;
+  --ink: #14202e;
+  --ink-soft: #526073;
+  --rule: #d3dae2;
+  --signal: #c2410c;
+  --go: #15803d;
+  --accent: #2563eb;
+  --cell: #e6ebf1;
+  --bad: #b91c1c;
+  --warn: #a16207;
+  --line: var(--rule);
+  --muted: var(--ink-soft);
+  --text: var(--ink);
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #0d141c;
+    --sheet: #151f2b;
+    --ink: #e5eaf0;
+    --ink-soft: #97a4b4;
+    --rule: #263343;
+    --signal: #fb923c;
+    --go: #4ade80;
+    --accent: #60a5fa;
+    --cell: #1b2735;
+    --bad: #f87171;
+    --warn: #fbbf24;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 17px/1.55 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 3rem 16px 5rem; }
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.clock { font: 600 clamp(3rem, 11vw, 7.5rem)/1 var(--mono); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; color: var(--signal); margin: 0; }
+.clock-note { margin: .75rem 0 0; font-size: 1.15rem; max-width: 40ch; }
+h1 { font-size: 1rem; font-weight: 600; margin: 0 0 1.5rem; color: var(--ink-soft); }
+h1 code { font: inherit; font-family: var(--mono); color: var(--ink); }
+h2 { font-size: 1.3rem; margin: 2.75rem 0 .5rem; }
+
+.drop { margin-top: 2.5rem; border: 2px dashed var(--rule); border-radius: 14px; background: var(--sheet); padding: 2.25rem 1.5rem; text-align: center; transition: border-color .15s, background .15s; }
+.drop.over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--sheet)); }
+.drop p { margin: .25rem 0; }
+.drop .big { font-size: 1.35rem; font-weight: 650; }
+.buttons { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-top: 1.25rem; }
+button, .button { font: 600 1rem var(--sans); border-radius: 8px; padding: .6rem 1.1rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); cursor: pointer; }
+button.primary { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+.privacy { font-size: .95rem; color: var(--ink-soft); margin-top: 1rem; }
+.status { font-family: var(--mono); font-size: .95rem; color: var(--ink-soft); min-height: 1.5em; margin-top: 1rem; }
+.status.error { color: var(--bad); }
+
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
+.how div { border-top: 3px solid var(--rule); padding-top: .75rem; }
+.how h3 { font-size: 1rem; margin: 0 0 .25rem; }
+.how p { margin: 0; color: var(--ink-soft); font-size: .95rem; }
+
+.settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 1rem 1.25rem; margin-top: 2rem; }
+.settings label { display: block; font-size: .85rem; font-weight: 600; color: var(--ink-soft); }
+.settings input { width: 100%; margin-top: .25rem; font: 1rem var(--sans); padding: .45rem .6rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--page); color: var(--ink); }
+.settings .hint { font-size: .8rem; color: var(--ink-soft); margin: .2rem 0 0; }
+.card { margin-top: 1.5rem; }
+.card svg { width: 100%; height: auto; border-radius: 12px; box-shadow: 0 0 0 1px var(--rule); display: block; }
+.share { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
+.share p { margin: 0; color: var(--ink-soft); font-size: .95rem; flex: 1 1 260px; }
+.stats td, .waiting td, .stats th, .waiting th { font-size: .95rem; }
+.waiting td:nth-child(3) { overflow-wrap: anywhere; }
+.table-wrap { overflow-x: auto; }
+footer { margin-top: 4rem; color: var(--ink-soft); font-size: .9rem; }
+code { font-family: var(--mono); overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { .drop { transition: none; } }
+</style>
+<link rel="stylesheet" href="sections.css">
+</head>
+<body>
+<main>
+<h1><code>reply-clock</code> by AskEleven</h1>
+
+<section id="intro">
+  <p class="clock" id="clock" aria-live="off">0:00</p>
+  <p class="clock-note">You have been on this page that long. How long do the people who email you wait for an answer?</p>
+
+  <div class="drop" id="drop">
+    <p class="big">Drop your mail export here</p>
+    <p>An mbox file, .eml files, or a folder of them. Include your sent mail: your replies are in it.</p>
+    <div class="buttons">
+      <button class="primary" type="button" id="pick-files">Choose files</button>
+      <button type="button" id="pick-folder">Choose a folder</button>
+    </div>
+    <input type="file" id="files" multiple accept=".mbox,.mbx,.eml,application/mbox,message/rfc822" hidden>
+    <input type="file" id="folder" webkitdirectory multiple hidden>
+    <p class="privacy">Read in your browser, headers only. This page is not allowed to connect to anything, so your mail cannot leave it.</p>
+    <p class="status" id="status" role="status"></p>
+  </div>
+
+  <h2>Getting your export</h2>
+  <div class="how">
+    <div><h3>Gmail</h3><p>Google Takeout, Mail only. The file "All mail Including Spam and Trash.mbox" has your inbox and sent mail. Spam is left out.</p></div>
+    <div><h3>Apple Mail</h3><p>Select Inbox, then Mailbox, Export Mailbox. Do the same for Sent. Drop both .mbox folders here.</p></div>
+    <div><h3>Thunderbird</h3><p>With the ImportExportTools NG add-on, export Inbox and Sent as mbox files.</p></div>
+    <div><h3>Any IMAP mailbox</h3><p>Skip the export: <code>npx @askeleven/reply-clock imap</code> reads headers straight from the server, read-only.</p></div>
+  </div>
+</section>
+
+<section id="result" hidden>
+  <div class="settings">
+    <div><label for="me">Your addresses</label><input id="me" autocomplete="off" spellcheck="false"><p class="hint" id="me-hint"></p></div>
+    <div><label for="domains">Colleagues' domain</label><input id="domains" placeholder="acme.com" autocomplete="off" spellcheck="false"><p class="hint">Their replies count as yours.</p></div>
+    <div><label for="tz">Time zone</label><input id="tz" autocomplete="off" spellcheck="false"></div>
+    <div><label for="hours">Open hours</label><input id="hours" value="Mon-Fri 9-17" autocomplete="off" spellcheck="false"><p class="hint" id="hours-hint">Like Mon-Sat 8:30-18</p></div>
+    <div><label for="business">Name on the card</label><input id="business" placeholder="Harbor Plumbing" autocomplete="off"></div>
+  </div>
+
+  <div class="card" id="card"></div>
+  <div class="share">
+    <p>The card shows totals only: no names, addresses or subjects. It is made to share.</p>
+    <button class="primary" type="button" id="png">Download PNG</button>
+    <button type="button" id="svg">Download SVG</button>
+    <button type="button" id="again">Read other mail</button>
+  </div>
+  <p class="privacy">Everything below names people. It stays on this page and is gone when you close it.</p>
+  <div class="table-wrap" id="sections"></div>
+</section>
+
+<footer>
+  <p>Open source, MIT. The grade: A is a median first reply within 1 hour with 90% of people answered; B, 4 hours and 80%; C, a day and 70%; D, 3 days and 50%. Automated mail (newsletters, notifications, auto-replies) is left out. The same numbers from a terminal: <code>npx @askeleven/reply-clock</code>. <a href="https://github.com/askeleven/reply-clock">Source on GitHub</a>.</p>
+</footer>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>
