@@ -80,7 +80,7 @@ answered.
 
 **Left out as automated**: mailing lists (List-Id, List-Unsubscribe), bulk mail
 (Precedence: bulk, Feedback-ID), auto-replies (Auto-Submitted), bounces, no-reply and
-notification senders, and anything labelled Spam. Nobody is waiting on those.
+notification senders, and anything labeled Spam. Nobody is waiting on those.
 
 **Contact forms count.** A website form that mails you from no-reply@ with the customer in
 Reply-To is a lead waiting for an answer, and is timed as one.
