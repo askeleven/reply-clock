@@ -1,0 +1,58 @@
+{
+  "name": "@askeleven/reply-clock",
+  "version": "0.1.0",
+  "description": "How long do people wait for your reply? Grades your email first-reply times from an mbox export or straight over IMAP: median, share answered, after hours, new contacts. Headers only, never bodies. Shareable report card. Zero dependencies.",
+  "type": "module",
+  "license": "MIT",
+  "author": "AskEleven",
+  "homepage": "https://github.com/askeleven/reply-clock",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/askeleven/reply-clock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/askeleven/reply-clock/issues"
+  },
+  "keywords": [
+    "email",
+    "response-time",
+    "speed-to-lead",
+    "first-reply-time",
+    "mbox",
+    "imap",
+    "small-business",
+    "customer-service",
+    "report-card",
+    "ai-agents"
+  ],
+  "bin": {
+    "reply-clock": "bin/cli.js"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./src/index.js"
+    }
+  },
+  "files": [
+    "bin",
+    "src",
+    "types",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "build:types": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build:types && npm test"
+  },
+  "types": "types/index.d.ts",
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "^5.9.3"
+  }
+}
