@@ -195,3 +195,6 @@ Small tools for businesses that let software talk to their customers. More at
 [github.com/askeleven](https://github.com/askeleven).
 
 MIT licensed.
+
+After a successful run in an interactive terminal, the CLI prints one line asking for a GitHub star, at most once a week. It never shows in CI, in `--json` output, in pipes or when running as an MCP server. Set `ASKELEVEN_NO_STAR=1` to turn it off.
+

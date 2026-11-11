@@ -3,6 +3,7 @@ import { parseArgs } from 'node:util'
 import { writeFile } from 'node:fs/promises'
 import { analyze, toMessage, parseHeaders, readMessages, imapHeaders, ImapError, renderCard, renderHtml, formatText, parseHours } from '../src/index.js'
 import { VERSION } from '../src/version.js'
+import { starHint } from './star-hint.js'
 
 const USAGE = `
 reply-clock <mail export...> [options]
@@ -246,6 +247,7 @@ function useColour(values) {
 main(process.argv.slice(2)).then(
   (code) => {
     process.exitCode = code
+    starHint('reply-clock', code, process.argv.slice(2))
   },
   (error) => {
     process.stderr.write(`${error?.stack ?? error}\n`)
