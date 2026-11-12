@@ -1,6 +1,6 @@
 {
   "name": "@askeleven/reply-clock",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "How long do people wait for your reply? Grades your email first-reply times from an mbox export or straight over IMAP: median, share answered, after hours, new contacts. Headers only, never bodies. Shareable report card. Zero dependencies.",
   "type": "module",
   "license": "MIT",
